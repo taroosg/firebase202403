@@ -31,7 +31,7 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, push, set, onChildAdded, remove, onChildRemoved }
+    import { getDatabase, ref, push, set, update, remove, onChildAdded, onChildChanged, onChildRemoved, onValue }
       from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -44,8 +44,20 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app); //RealtimeDBに接続
-    const dbRef = ref(db, "chat"); //RealtimeDB内の"chat"を使う
+    const db = getDatabase(app);
+    const dbRef = ref(db, "chat");
+
+    // onValue(dbRef, (snapshot) => {
+    //   console.log(snapshot.val());
+    //   const array = [];
+    //   snapshot.forEach((record) => {
+    //     array.push({
+    //       key: record.key,
+    //       value: record.val(),
+    //     });
+    //   });
+    //   console.log(array);
+    // });
 
     //データ登録(Click)
     $("#send").on("click", function () {
@@ -53,35 +65,46 @@
         uname: $("#uname").val(),
         text: $("#text").val()
       }
-      const newPostRef = push(dbRef); //ユニークKEYを生成
-      set(newPostRef, msg);           //"chat"にユニークKEYをつけてオブジェクトデータを登録
+      const newPostRef = push(dbRef);
+      set(newPostRef, msg);
     });
 
-    //データ登録(Enter)
-    $("#text").on("keydown", function (e) {
-      console.log(e);        //e変数の中身を確認！！
-      if (e.keyCode == 13) {   //EnterKey=13
-        const msg = {
-          uname: $("#uname").val(),
-          text: $("#text").val()
-        }
-        const newPostRef = push(dbRef); //ユニークKEYを生成
-        set(newPostRef, msg);           //"chat"にユニークKEYをつけてオブジェクトデータを登録
-      }
-    });
-
-    //最初にデータ取得＆onSnapshotでリアルタイムにデータを取得
     onChildAdded(dbRef, function (data) {
-      const msg = data.val();    //オブジェクトデータを取得し、変数msgに代入
-      const key = data.key;      //データのユニークキー（削除や更新に使用可能）
-      //表示用テキスト・HTMLを作成
-      let h = '<p>';
+      const msg = data.val();
+      const key = data.key;
+      let h = '<p id="' + key + '">';
       h += msg.uname;
       h += '<br>';
-      h += msg.text;
+      h += '<span contentEditable="true" id="' + key + '_update">' + msg.text + '</span>';
+      h += '<span class="remove" data-key="' + key + '"> 🚮</span>';
+      h += '<span class="update" data-key="' + key + '"> 🔄</span>';
       h += '</p>';
-      $("#output").append(h); //#outputの最後に追加
+      $("#output").prepend(h);
     });
+
+    onChildChanged(dbRef, function (data) {
+      $('#' + data.key + '_update').text(data.val().text);
+      $('#' + data.key + '_update').fadeOut(100).fadeIn(100).fadeOut(100).fadeIn(100);
+    });
+
+    onChildRemoved(dbRef, function (data) {
+      $('#' + data.key).remove();
+    });
+
+    // 削除ボタンクリック時の処理
+    $('#output').on('click', '.remove', function () {
+      const key = $(this).data('key');
+      remove(ref(db, 'chat/' + key));
+      $('#' + key).remove();
+    });
+
+    // 更新ボタンクリック時の処理
+    $('#output').on('click', '.update', function () {
+      const key = $(this).data('key');
+      const text = $('#' + key + '_update').text();
+      update(ref(db, 'chat/' + key), { text: text });
+    });
+
   </script>
 </body>
 
