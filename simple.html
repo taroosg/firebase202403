@@ -30,34 +30,27 @@
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script type="module">
+    import { firebaseConfig } from "./env.js";
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, push, set, update, remove, onChildAdded, onChildChanged, onChildRemoved, onValue }
       from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "",
-      authDomain: "gs-ada-202403.firebaseapp.com",
-      projectId: "gs-ada-202403",
-      storageBucket: "gs-ada-202403.appspot.com",
-      messagingSenderId: "824338426602",
-      appId: "1:824338426602:web:e8721e32cf090ae2808593"
-    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const dbRef = ref(db, "chat");
 
-    // onValue(dbRef, (snapshot) => {
-    //   console.log(snapshot.val());
-    //   const array = [];
-    //   snapshot.forEach((record) => {
-    //     array.push({
-    //       key: record.key,
-    //       value: record.val(),
-    //     });
-    //   });
-    //   console.log(array);
-    // });
+    onValue(dbRef, (snapshot) => {
+      console.log(snapshot.val());
+      const array = [];
+      snapshot.forEach((record) => {
+        array.push({
+          key: record.key,
+          value: record.val(),
+        });
+      });
+      console.log(array);
+    });
 
     //データ登録(Click)
     $("#send").on("click", function () {
@@ -65,17 +58,22 @@
         uname: $("#uname").val(),
         text: $("#text").val()
       }
+
+      // setとpushを使う
       const newPostRef = push(dbRef);
-      set(newPostRef, msg);
+      // set(newPostRef, msg);
+
+      // pushだけ使う
+      // push(dbRef, msg);
     });
 
     onChildAdded(dbRef, function (data) {
       const msg = data.val();
       const key = data.key;
-      let h = '<p id="' + key + '">';
+      let h = "<p id=\"" + key + '">';
       h += msg.uname;
       h += '<br>';
-      h += '<span contentEditable="true" id="' + key + '_update">' + msg.text + '</span>';
+      h += '<span contentEditable="true" id="' + key + '_\'update\">' + msg.text + '</span>';
       h += '<span class="remove" data-key="' + key + '"> 🚮</span>';
       h += '<span class="update" data-key="' + key + '"> 🔄</span>';
       h += '</p>';
