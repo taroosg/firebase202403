@@ -56,15 +56,15 @@
     $("#send").on("click", function () {
       const msg = {
         uname: $("#uname").val(),
-        text: $("#text").val()
+        text: $("#text").val(),
       }
 
       // setとpushを使う
       const newPostRef = push(dbRef);
-      // set(newPostRef, msg);
+      set(newPostRef, msg);
 
       // pushだけ使う
-      // push(dbRef, msg);
+      push(dbRef, msg);
     });
 
     onChildAdded(dbRef, function (data) {
